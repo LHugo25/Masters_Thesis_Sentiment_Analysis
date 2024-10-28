@@ -1,0 +1,39 @@
+---
+title: "Random selection labelling"
+author: "Lise-Marie Hugo"
+date: "10/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Random sampling
+```{r cars}
+library(writexl)
+#random selection 
+data <- X2022_9
+N <- 500
+rs <- unique(round(runif(N, 1, nrow(data))))
+```
+
+Now create dataset to label:
+```{r}
+
+labdata <- data[rs,]
+label <- rep(0, nrow(data))
+data <- cbind(data, label)
+
+for(i in rs)
+{
+  data[rs, "label"] <- "lab"
+}
+newdata <- data
+write_xlsx(newdata,"/Users/lise-mariehugo/Desktop/Thesisdata/FinDataLabelled/2022/X2022_9.xlsx")
+
+    
+
+```
+
+
