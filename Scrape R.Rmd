@@ -1,0 +1,432 @@
+---
+title: "Scrape R"
+author: "Lise-Marie Hugo"
+date: "06/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(httpuv)
+library(rtweet)
+my_authorisation <- create_token(app="AcaDemiaR",consumer_key="7p7rABVjtqXacqgEWy0r5aBOi", consumer_secret="qyQQrRKPxwqsYX860tXvJV1Ap1CAFfq9GmovaAe6RF2Krrbitn", access_token="1098204594071629828-kIBkHdu91NsKdm1xmBwmWcLKj0BIw4", access_secret="FXcwWIEaJIIwO6jsHXlCq6N3QIdOyvev73BdsTMJAGgxb")
+
+bearer_token = "AAAAAAAAAAAAAAAAAAAAAB%2FRbAEAAAAAVFvwYDuGTU5%2FXms%2Bgsd2lu7Ky3s%3DU73E4k139RwhjpvqM4bdSzZQnyJ5LUutNycTja0mRPsKTYpuyA" 
+#geo = 
+rt <- search_fullarchive("has:geo profile_country:RSA",n=100, fromDate="201401010000", toDate="201501010000",env_name = "AcaDemia3", token=TWITTER_BEARER )
+
+```
+
+Using a different package
+```{r}
+library(academictwitteR)
+library(lares)
+library(h2o)
+#set_bearer()
+#TWITTER_BEARER = "AAAAAAAAAAAAAAAAAAAAAB%2FRbAEAAAAAVFvwYDuGTU5%2FXms%2Bgsd2lu7Ky3s%3DU73E4k139RwhjpvqM4bdSzZQnyJ5LUutNycTja0mRPsKTYpuyA"
+#devtools::install_github("cjbarrie/academictwitteR", build_vignettes = TRUE)
+
+q = build_query(country="ZA")
+hi <- get_all_tweets(query=q, start_tweets="2018-01-01T00:00:00Z",end_tweets = "2018-01-31T00:00:00Z", bearer_token = get_bearer(), data_path = "/Users/lise-mariehugo/Desktop/Thesisdata/202020", n=800000)
+
+#400 | Bad request | The request was invalid or cannot be otherwise served. An accompanying error message will explain further. Requests without authentication or with invalid query parameters are considered invalid and will yield this response.
+
+
+```
+```{r}
+#now take hi
+dfcreate <- function(df)
+{
+  ents <- df[,"entities"]
+  ents <- as.data.frame(ents)
+  ents <- ents[,-1]
+  public <- df[,"public_metrics"]
+  g <- df[,"geo"]
+  newdata <- df[,-which(names(df) %in% c("entities","public_metrics","geo"))]
+  newdata <- cbind(newdata,ents,public,g)
+  newdata
+  
+}
+
+newdata <- dfcreate(hi)
+#for(i in 1:n)
+#{
+#  for(j in 1:m){
+ #   if(is.null(newdata[i,j])==TRUE) (newdata[i,j] <- "replaced")
+  #  if(is.na(newdata[i,j])==TRUE) (newdata[i,j] <- 0)
+  #}
+#}
+write.table(newdata,file="/Users/lise-mariehugo/Desktop/Thesisdata/Data/2018/Jan2018.xls", sep="\t")
+#increase storage
+#options(java.parameters = "-Xmx1024m")
+#library(XLConnect)
+
+#library(xlsx)
+#write.xlsx(newdata,file="/Users/lise-mariehugo/Desktop/Thesisdata/Data/2020/JAN2020text.xlsx")
+#write.xlsx(newdata,file="/Users/lise-mariehugo/Desktop/Thesisdata/Code/Jan2011.xlsx")
+```
+```{r}
+enddates = NULL
+  startdates = NULL
+datacollection <- function(year, n)
+{
+  #FUNCTIONS & LIBS NEEDED
+  #_______________________________________________________________________________________
+  library(ds4psy)
+  library(academictwitteR)
+  library(lares)
+  library(h2o)
+
+  nDigits2 <- function(x){
+
+  truncX <- floor(abs(x))
+
+  if(truncX != 0){
+    floor(log10(truncX)) + 1
+  } else {
+    1
+  }
+
+}
+
+      dfcreate <- function(df)
+  {
+    ents <- df[,"entities"]
+    ents <- as.data.frame(ents)
+    ents <- ents[,-1]
+    public <- df[,"public_metrics"]
+    g <- df[,"geo"]
+    newdata <- df[,-which(names(df) %in% c("entities","public_metrics","geo"))]
+    newdata <- cbind(newdata,ents,public,g)
+    newdata
+  
+      }
+    #_____________________________________________________________________________________
+  monthend = NULL
+  start = "2009-12-01T00:00:00Z"
+  end = "2009-12-31T00:00:00Z"
+  
+  for(i in 11:12)
+  {
+    #automating the startdate and enddate
+    if(i == 4) (monthend <- 30)
+    if(i == 6) (monthend <- 30)
+    if(i == 9) (monthend <- 30)
+    if(i == 11) (monthend <- 30)
+    if(i == 1) (monthend <- 31)
+    if(i == 3) (monthend <- 31)
+    if(i == 5) (monthend <- 31)
+    if(i == 7) (monthend <- 31)
+    if(i == 8) (monthend <- 31)
+    if(i == 10) (monthend <- 31)
+    if(i == 12) (monthend <- 31)
+    if(i==2 && is_wholenumber(year/4) == TRUE) (monthend <- 29)
+    if(i==2 && is_wholenumber(year/4) == FALSE) (monthend <- 28)
+    
+    if(nDigits2(i)==1) (start = paste(year,paste("0", i, sep=""), paste(paste("01","T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+    else(start <- paste(year,i, paste(paste("01","T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+  
+    if(nDigits2(i)==1) (end <- paste(year,paste("0", i, sep=""), paste(paste(monthend,"T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+    else(end <-  paste(year,i, paste(paste(monthend,"T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+    
+    #data collection
+    q = build_query(country="ZA")
+    data <- get_all_tweets(query=q, start_tweets= as.date(start), end_tweets = as.date(end), bearer_token = get_bearer(), data_path = "/Users/lise-mariehugo/Desktop/Thesisdata/2020", n=400)
+    
+    startdate2 <<- startdate
+    #data storage
+    newdata <- dfcreate(data)
+    write.table(newdata,file=paste("/Users/lise-mariehugo/Desktop/Thesisdata/Data/",year, "/",year,"-",i,".xls", sep=""), sep="\t")
+  }
+}
+
+datacollection(2009)
+```
+```{r}
+#10000 tweets a day - what we are trying to collect and automate
+dailycol <- function(year,N)
+{
+   #FUNCTIONS & LIBS NEEDED
+  #_______________________________________________________________________________________
+  library(ds4psy)
+  library(academictwitteR)
+  library(lares)
+  library(h2o)
+
+  nDigits2 <- function(x){
+
+  truncX <- floor(abs(x))
+
+  if(truncX != 0){
+    floor(log10(truncX)) + 1
+  } else {
+    1
+  }
+
+}
+
+      dfcreate <- function(df)
+  {
+    ents <- df[,"entities"]
+    ents <- as.data.frame(ents)
+    ents <- ents[,-1]
+    public <- df[,"public_metrics"]
+    g <- df[,"geo"]
+    newdata <- df[,-which(names(df) %in% c("entities","public_metrics","geo"))]
+    newdata <- cbind(newdata,ents,public,g)
+    newdata
+  
+      }
+    #_____________________________________________________________________________________
+      
+  #SORTING OUT THE DATES FOR COLLECTION
+  monthend = NULL
+  start = "NULL"
+  end = "NULL"
+  
+  for(i in 11:12)
+  {
+    #automating the startdate and enddate
+    if(i == 4) (monthend <- 30)
+    if(i == 6) (monthend <- 30)
+    if(i == 9) (monthend <- 30)
+    if(i == 11) (monthend <- 30)
+    if(i == 1) (monthend <- 31)
+    if(i == 3) (monthend <- 31)
+    if(i == 5) (monthend <- 31)
+    if(i == 7) (monthend <- 31)
+    if(i == 8) (monthend <- 31)
+    if(i == 10) (monthend <- 31)
+    if(i == 12) (monthend <- 31)
+    if(i==2 && is_wholenumber(year/4) == TRUE) (monthend <- 29)
+    if(i==2 && is_wholenumber(year/4) == FALSE) (monthend <- 28)
+    
+    for(j in 1:monthend)
+    {
+      
+    #START DATE
+    if(nDigits2(i)==1 && nDigits2(j)==1) (start = paste(year,paste("0", i, sep=""), paste(paste(paste("0", j, sep=""),"T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+    if(nDigits2(i)==2 && nDigits2(j)==2) (start = paste(year,i, paste(paste(j,"T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+    
+    if(nDigits2(i)==1 && nDigits2(j)==2) (start = paste(year,paste("0", i, sep=""), paste(paste(j,"T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+    if(nDigits2(i)==2 && nDigits2(j)==1) (start = paste(year,i, paste(paste(paste("0", j, sep=""),"T","00", sep=""),"00", paste("00","Z", sep=""), sep=":"),sep = "-"))
+      
+       #END DATE
+     if(nDigits2(i)==1 && nDigits2(j)==1) (end = paste(year,paste("0", i, sep=""), paste(paste(paste("0", j, sep=""),"T","23", sep=""),"59", paste("59","Z", sep=""), sep=":"),sep = "-"))
+    if(nDigits2(i)==2 && nDigits2(j)==2) (end = paste(year,i, paste(paste(j,"T","23", sep=""),"59", paste("59","Z", sep=""), sep=":"),sep = "-"))
+    
+    if(nDigits2(i)==1 && nDigits2(j)==2) (end = paste(year,paste("0", i, sep=""), paste(paste(j,"T","23", sep=""),"59", paste("59","Z", sep=""), sep=":"),sep = "-"))
+    if(nDigits2(i)==2 && nDigits2(j)==1) (end = paste(year,i, paste(paste(paste("0", j, sep=""),"T","23", sep=""),"59", paste("59","Z", sep=""), sep=":"),sep = "-"))
+#________________________________________________________________________________________________________________________________________
+    #DATA COLLECTION
+    q = build_query(country="ZA")
+    data <- get_all_tweets(query=q, start_tweets= start, end_tweets = end, bearer_token = get_bearer(), data_path = "/Users/lise-mariehugo/Desktop/Thesisdata/202020", N)
+    
+#________________________________________________________________________________________________________________________________________
+    #DATA STORAGE
+    newdata <- dfcreate(data)
+    write.table(newdata,file=paste("/Users/lise-mariehugo/Desktop/Thesisdata/Data/",year, "/",year,"-",i,"-",j,".xls", sep=""), sep="\t")
+    
+    
+    }
+    
+  }
+}
+
+dailycol(2021, N=10000)
+
+```
+```{r}
+q = build_query(country="ZA")
+  data <- get_all_tweets(query=q, start_tweets= "2021-01-01T00:00:00Z", end_tweets = "2011-04-30T00:00:00Z", bearer_token = get_bearer(), data_path = "/Users/lise-mariehugo/Desktop/Thesisdata/202020", n=Inf)
+
+#now take hi
+dfcreate <- function(df)
+{
+  ents <- df[,"entities"]
+  ents <- as.data.frame(ents)
+  ents <- ents[,-1]
+  public <- df[,"public_metrics"]
+  g <- df[,"geo"]
+  newdata <- df[,-which(names(df) %in% c("entities","public_metrics","geo"))]
+  newdata <- cbind(newdata,ents,public,g)
+  newdata
+  
+}
+
+newdata <- dfcreate(data)
+#for(i in 1:n)
+#{
+#  for(j in 1:m){
+ #   if(is.null(newdata[i,j])==TRUE) (newdata[i,j] <- "replaced")
+  #  if(is.na(newdata[i,j])==TRUE) (newdata[i,j] <- 0)
+  #}
+#}
+write.table(newdata,file="/Users/lise-mariehugo/Desktop/Thesisdata/Data/2010/Apr2011.xls", sep="\t")
+#increase storage
+```
+
+```{r}
+formatdata <- function(data)
+{
+  newdata <- cbind(data["source"], data["possibly_sensitive"], data["text"], data["lang"], data["created_at"], data["retweet_count"],data["reply_count"],data["like_count"], data["quote_count"], data["place_id"])
+  newdata
+}
+
+Jan012013 <- formatdata(D1)
+Jan022013 <- formatdata(D2)
+Jan032013 <- formatdata(D3)
+Jan042013 <- formatdata(D4)
+Jan052013 <- formatdata(D5)
+Jan062013 <- formatdata(D6)
+Jan072013 <- formatdata(D7)
+Jan082013 <- formatdata(D8)
+Jan092013 <- formatdata(D9)
+Jan102013 <- formatdata(D10)
+Jan112013 <- formatdata(D11)
+Jan122013 <- formatdata(D12)
+Jan132013 <- formatdata(D13)
+Jan142013 <- formatdata(D14)
+Jan152013 <- formatdata(D15)
+Jan162013 <- formatdata(D16)
+Jan172013 <- formatdata(D17)
+Jan182013 <- formatdata(D18)
+Jan192013 <- formatdata(D19)
+Jan202013 <- formatdata(D20)
+Jan212013 <- formatdata(D21)
+Jan222013 <- formatdata(D22)
+Jan232013 <- formatdata(D23)
+Jan242013 <- formatdata(D24)
+Jan252013 <- formatdata(D25)
+Jan262013 <- formatdata(D26)
+Jan272013 <- formatdata(D27)
+Jan282013 <- formatdata(D28)
+Jan292013 <- formatdata(D29)
+Jan302013 <- formatdata(D30)
+Jan312013 <- formatdata(D31)
+
+
+
+combineMonth31 <- function(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28,data29,data30,data31)
+{
+  combinedata <- rbind(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28,data29,data30,data31)
+  combinedata
+}
+#_____________________________
+
+combineMonth30 <- function(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28,data29,data30)
+{
+  combinedata <- rbind(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28,data29,data30)
+  combinedata
+}
+
+#______________________________
+combineMonth28 <- function(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28)
+{
+  combinedata <- rbind(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28)
+  combinedata
+}
+#________________________________
+
+combineMonth29 <- function(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28,data29)
+{
+  combinedata <- rbind(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20,data21,data22,data23,data24,data25,data26,data27,data28,data29)
+  combinedata
+}
+```
+
+```{r}
+newdata <- combineMonth31(D1,D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13,D14,D15,D16,D17,D18,D19,D20,D21,D22,D23,D24,D25,D26,D27,D28,D29,D30,D31)
+
+#create new data set
+write.table(newdata,file="/Users/lise-mariehugo/Desktop/Thesisdata/Data/2012/Apr2012.xls", sep="\t")
+```
+
+```{r}
+
+Feb2013 <- combineMonth28(Jan012013,Jan022013,Jan032013,Jan042013,Jan052013,Jan062013,Jan072013, Jan082013, Jan092013, Jan102013, Jan112013, Jan102013, Jan132013, Jan142013, Jan152013,Jan162013, Jan172013 , Jan182013 , Jan192013 , Jan202013 , Jan212013 , Jan222013 , Jan232013 , Jan242013 , Jan252013 , Jan262013 , Jan272013 , Jan282013)
+
+
+```
+
+
+```{r}
+
+#combining the data
+
+for(i in 1:31)
+{
+  assign(paste("D",i,sep=""),formatdata(read.csv(paste("/Users/lise-mariehugo/Desktop/Thesisdata/Data/2016/Dec2016/2016-12-",i,".xls", sep=""), header = TRUE, sep = "\t", dec = ".")) )
+  print(i)
+}
+
+newdata <- combineMonth29(D1,D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13,D14,D15,D16,D17,D18,D19,D20,D21,D22,D23,D24,D25,D26,D27,D28,D29)
+
+newdata <- combineMonth31(D1,D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13,D14,D15,D16,D17,D18,D19,D20,D21,D22,D23,D24,D25,D26,D27,D28,D29,D30, D31)
+
+newdata <- combineMonth30(D1,D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13,D14,D15,D16,D17,D18,D19,D20,D21,D22,D23,D24,D25,D26,D27,D28,D29,D30)
+
+
+#create new data set
+write.table(newdata,file="/Users/lise-mariehugo/Desktop/Thesisdata/Data/2016/Finaldata/Dec2016.xls", sep="\t")
+```
+
+```{r}
+hashtags <- c("#Johannesburg",
+"#SONA2013",
+"#CapeTown",
+"#SONA",
+"#OscarPistorious",
+"#Crime",
+"#StopRape",
+"#TheBigDebate",
+"#Carteblanche",
+"#Budget2013",
+"#TipsForZuma",
+"#ValentinesDay",
+"#SONADebate",
+"#Blessed",
+"#FML",
+"#SouthAfrica",
+"#Durban",
+"#Life",
+"#TGIF",
+"#IBlameApartheidFor",
+"#Zuma",
+"#Jozi",
+"#Sabcnews",
+"#ANC",
+"#SA"
+)
+
+hashtagweights <- function(hashtags){
+mylist = list()
+totals = rep(0, length(hashtags))
+  for(i in 1:length(hashtags))
+  {
+    q = build_query(query=hashtags[i],country="ZA")
+    mylist[[i]] <- count_all_tweets(query = q,
+              start_tweets = "2021-05-27T07:00:00Z",
+              end_tweets = "2021-06-05T20:00:00Z",
+              bearer_token = get_bearer())
+    totals[i] <- sum(mylist[[i]][,3])
+  }
+
+hashtagw <- cbind(hashtags, totals)
+print(hashtagw)
+}
+
+
+for(i in 1:length(hashtags))
+{
+  paste("data",hashtags[i],sep="")
+  data <- as.data.frame(data)
+  tabhashw[i] <- sum(data[,2])
+}
+tabhashw <- cbind(t=hashtags,tabhashw)
+print(tabhashw)
+```
+
