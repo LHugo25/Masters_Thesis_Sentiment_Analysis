@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Random sampling
+Random sampling - randomly selecting tweets to be labelled by the labelling team
 ```{r cars}
 library(writexl)
 #random selection 
